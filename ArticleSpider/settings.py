@@ -66,12 +66,17 @@ ROBOTSTXT_OBEY = False
 # Configure item pipelines
 # See https://doc.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-   'ArticleSpider.pipelines.ArticlespiderPipeline': 300,
-    'scrapy.pipelines.images.ImagesPipeline':1
+   'ArticleSpider.pipelines.JsonExporterPipeline': 2,
+    # 'scrapy.pipelines.images.ImagesPipeline':1
+    'ArticleSpider.pipelines.ArticleImagePipeline':1
 }
 IMAGES_URLS_FIELD = "front_image_url"
 project_dir = os.path.dirname(os.path.abspath(__file__))
 IMAGES_STORE = os.path.join(project_dir, "images")
+
+#图片过滤规则
+# IMAGES_MIN_HEIGHT = 100  #图片最小高度
+# IMAGES_MIN_WIDTH = 100   #图片最小宽度
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://doc.scrapy.org/en/latest/topics/autothrottle.html

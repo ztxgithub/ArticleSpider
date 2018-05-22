@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 import scrapy
 import re
+from datetime import datetime
 
 from scrapy.http import Request
 from urllib import parse
 
 from ArticleSpider.items import JobBoleArticleItem
+from ArticleSpider.utlils.common import get_md5
 import hashlib
 
 class JobboleSpider(scrapy.Spider):
@@ -74,14 +76,16 @@ class JobboleSpider(scrapy.Spider):
         context_css = response.css(".entry").extract()[0]
 
         article_item["title"] = title_css
-        article_item["datetime"] = datetime_css
+        # datetime_css = "2018/05/12"
+        try:
+            create_date = datetime.strptime(datetime_css, "%Y/%m/%d").date()
+        except Exception as e:
+            create_date = datetime.now().date()
+        article_item["datetime"] = create_date
         article_item["like_num"] = like_num_css
         article_item["url"] = response.url
-        # md5 = hashlib.md5()
-        # md5.update(response.url.encode('utf-8'))
-        # article_item["url_object_id"] = md5.hexdigest()
-        article_item["front_image_url"] = front_image_url
-        # article_item["front_image_path"] =
+        article_item["url_object_id"] = get_md5(response.url)
+        article_item["front_image_url"] = [front_image_url]
         article_item["collect_num"] = collect_num_css
         article_item["context"] = context_css
 
