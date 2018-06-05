@@ -9,6 +9,11 @@ import json
 
 from scrapy.pipelines.images import ImagesPipeline
 from scrapy.exporters import JsonItemExporter
+##这个adbapi能够将我们的数据库操作变为异步化的操作
+from twisted.enterprise import adbapi
+
+import MySQLdb
+import MySQLdb.cursors
 
 # 进行数据库的保存
 class ArticlespiderPipeline(object):
@@ -51,3 +56,74 @@ class ArticleImagePipeline(ImagesPipeline):
 
         item["front_image_path"] = image_file_path
         return item
+
+#将数据保存到数据库中
+class MysqlPipeline(object):
+    def __init__(self):
+        self.conn = MySQLdb.connect(host='127.0.0.1', user='root', password='123456',
+                                    database='article_spider', charset="utf8", use_unicode=True)
+        self.cursor = self.conn.cursor()
+
+    def process_item(self, item, spider):
+        insert_sql = """
+            insert into jobbole_article(title, datetime, url, 
+            url_object_id, front_image_url, front_image_path, like_num, collect_num, context)
+            values(%s, %s, %s, %s, %s, %s, %s, %s, %s);
+        """
+
+        self.cursor.execute(insert_sql, (item["title"], item["datetime"], item["url"],
+                                         item["url_object_id"], item["front_image_url"],
+                                         item["front_image_path"], item["like_num"],
+                                         item["collect_num"], item["context"]))
+        self.conn.commit()
+
+
+#通过twisted框架进行数据库插入
+class MysqlTwistedPipeline(object):
+
+    def __init__(self, dbpool):
+        self.dbpool = dbpool
+
+    @classmethod
+    def from_settings(cls, settings):
+        ## dict 里面的参数名称 例如 ”database"这些要与MySQLdb.connect函数中的固定参数名要一致
+        dbparams = dict(
+            host = settings["MYSQL_HOST"],
+            database = settings["MYSQL_DBNAME"],
+            user = settings["MYSQL_USER"],
+            password = settings["MYSQL_PASSWORD"],
+            charset= 'utf8',
+            cursorclass = MySQLdb.cursors.DictCursor,
+            use_unicode=True
+        )
+
+        ## twisted 本身使用时异步的容器，具体操作还是对应的数据库
+        ## "MySQLdb" 对应于 数据库的模块名
+        ## *connargs 是数据库连接的参数
+        dbpool = adbapi.ConnectionPool("MySQLdb", **dbparams)
+        return cls(dbpool)
+
+    # 使用twisted将mysql插入变为异步执行
+    def process_item(self, item, spider):
+        ## 调用twisted 中的runInteraction函数来执行异步操作
+        query = self.dbpool.runInteraction(self.do_insert, item)
+        ##进行错误的处理判断
+        query.addErrback(self.handle_error)
+
+    def handle_error(self, failure):
+        #处理异步插入的异常
+        print(failure)
+
+    def do_insert(self, cursor, item):
+        #执行具体得插入
+        insert_sql = """
+                    insert into jobbole_article(title, datetime, url, 
+                    url_object_id, front_image_url, front_image_path, like_num, collect_num, context)
+                    values(%s, %s, %s, %s, %s, %s, %s, %s, %s);
+                """
+
+        cursor.execute(insert_sql, (item["title"], item["datetime"], item["url"],
+                                         item["url_object_id"], item["front_image_url"],
+                                         item["front_image_path"], item["like_num"],
+                                         item["collect_num"], item["context"]))
+        ## 不需要commit twisted自动帮我们commit
