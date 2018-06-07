@@ -51,13 +51,13 @@ class JsonExporterPipeline(object):
 #进行item中其他项的赋值
 class ArticleImagePipeline(ImagesPipeline):
     def item_completed(self, results, item, info):
-        for status, value in results:
-            image_file_path = value["path"]
-
-        item["front_image_path"] = image_file_path
+        if "front_image_url" in item:
+            for status, value in results:
+                image_file_path = value["path"]
+            item["front_image_path"] = image_file_path
         return item
 
-#将数据保存到数据库中
+#将数据同步得保存到数据库中
 class MysqlPipeline(object):
     def __init__(self):
         self.conn = MySQLdb.connect(host='127.0.0.1', user='root', password='123456',
@@ -78,7 +78,7 @@ class MysqlPipeline(object):
         self.conn.commit()
 
 
-#通过twisted框架进行数据库插入
+#通过twisted框架进行数据库插入(异步得插入到数据库中)
 class MysqlTwistedPipeline(object):
 
     def __init__(self, dbpool):
