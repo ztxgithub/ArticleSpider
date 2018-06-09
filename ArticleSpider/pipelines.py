@@ -85,15 +85,15 @@ class MysqlTwistedPipeline(object):
         self.dbpool = dbpool
 
     @classmethod
-    def from_settings(cls, settings):
-        ## dict 里面的参数名称 例如 ”database"这些要与MySQLdb.connect函数中的固定参数名要一致
+    def from_settings(cls, settings): # 这里的 settings 就是对应于 settings.py 中 相关的数据库参数
+        # dict 里面的参数名称 例如 ”database"这些要与MySQLdb.connect函数中的固定参数名要一致
         dbparams = dict(
-            host = settings["MYSQL_HOST"],
-            database = settings["MYSQL_DBNAME"],
-            user = settings["MYSQL_USER"],
-            password = settings["MYSQL_PASSWORD"],
-            charset= 'utf8',
-            cursorclass = MySQLdb.cursors.DictCursor,
+            host=settings["MYSQL_HOST"],
+            database=settings["MYSQL_DBNAME"],
+            user=settings["MYSQL_USER"],
+            password=settings["MYSQL_PASSWORD"],
+            charset='utf8',
+            cursorclass=MySQLdb.cursors.DictCursor,
             use_unicode=True
         )
 
@@ -105,13 +105,13 @@ class MysqlTwistedPipeline(object):
 
     # 使用twisted将mysql插入变为异步执行
     def process_item(self, item, spider):
-        ## 调用twisted 中的runInteraction函数来执行异步操作
+        # 调用twisted 中的runInteraction函数来执行异步操作
         query = self.dbpool.runInteraction(self.do_insert, item)
-        ##进行错误的处理判断
+        # 进行错误的处理判断
         query.addErrback(self.handle_error)
 
     def handle_error(self, failure):
-        #处理异步插入的异常
+        # 处理异步插入的异常
         print(failure)
 
     def do_insert(self, cursor, item):
@@ -126,4 +126,4 @@ class MysqlTwistedPipeline(object):
                                          item["url_object_id"], item["front_image_url"],
                                          item["front_image_path"], item["like_num"],
                                          item["collect_num"], item["context"]))
-        ## 不需要commit twisted自动帮我们commit
+        # 不需要commit twisted自动帮我们commit

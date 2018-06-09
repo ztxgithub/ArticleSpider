@@ -31,6 +31,8 @@ class JobboleSpider(scrapy.Spider):
             ## 有的网站提取的post_url为110287/，则需要通过 response.url + post_url
             image_url = post_node.css("img::attr(src)").extract_first("")
             post_url = post_node.css("::attr(href)").extract_first("")
+            # 如果想再向回调函数self.parse_detail传递一些参数,
+            # 则使用第二个参数 meta,则在对应的回调函数中self.parse_detail的参数 response.meta.get()进行提取
             yield Request(url=parse.urljoin(response.url,post_url), meta={"front_image_url":image_url}, callback=self.parse_detail)
 
         #提取下一页并交给scrapy进行下载
@@ -121,7 +123,6 @@ class JobboleSpider(scrapy.Spider):
 
         # 调用 load_item() 方法,才会将 前面的规则进行解析
         article_item = item_loader.load_item()
-
 
         yield article_item
 
