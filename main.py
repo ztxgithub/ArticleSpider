@@ -11,4 +11,5 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 #这个时候就可以在jobbole.py进行断电调试
 #这个时候可以要将 settings.py 中的 置为ROBOTSTXT_OBEY = False，因为在scrapy运行时默认是true，将网站中遵从robots.txt，将
 #不合理的url过滤掉
-execute(["scrapy", "crawl", "jobbole"])
+# execute(["scrapy", "crawl", "jobbole"])
+execute(["scrapy", "crawl", "zhihu"])

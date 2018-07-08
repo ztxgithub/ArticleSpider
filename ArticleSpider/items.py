@@ -83,3 +83,44 @@ class JobBoleArticleItem(scrapy.Item):
     )       # 收藏数
 
     context = scrapy.Field()           # 正文
+
+
+
+
+
+"""
+    知乎业务代码
+"""
+
+"""
+    知乎的问题 item
+"""
+class ZhihuQuestionItem(scrapy.Item):
+    zhihu_id = scrapy.Field()
+    topics = scrapy.Field()
+    url = scrapy.Field()
+    title = scrapy.Field()
+    content = scrapy.Field()
+    """
+        由于 create_time 和 update_time 在网页上获取不到不写 
+    """
+    comments_num = scrapy.Field()
+    watch_user_num = scrapy.Field()
+    click_num = scrapy.Field()
+    crawl_tiem = scrapy.Field()
+
+
+"""
+    知乎的问题回答 item
+"""
+class ZhihuAnswerItem(scrapy.Item):
+    zhihu_id = scrapy.Field()
+    url = scrapy.Field()
+    question_id = scrapy.Field()
+    author_id = scrapy.Field()
+    content = scrapy.Field()
+    praise_num = scrapy.Field()
+    comments_num = scrapy.Field()
+    create_time = scrapy.Field()
+    update_time = scrapy.Field()
+    crawl_time = scrapy.Field()
