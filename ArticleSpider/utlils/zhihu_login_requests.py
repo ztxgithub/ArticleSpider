@@ -13,6 +13,7 @@ except:
     import http.cookiejar as cookielib
 
 import re
+import time
 
 #有了这个session后,每次请求就不用requests.get了,session代表的是
 #某一次连接
@@ -66,6 +67,37 @@ def get_index():
         f.write(response.text.encode("utf-8"))
     print("ok")
 
+"""
+    获取验证码
+"""
+def get_captcha():
+    """
+        先提供一个根据时间戳的字符串
+    """
+    t = str(int(time.time() * 1000))
+
+    # 构造请求 验证码的 url
+    captcha_url = "https://www.zhihu.com/captcha.gif?r={0}&type=login".format(t)
+
+    response = session.get(captcha_url, headers=headers)
+    # 以二进制的格式打开 验证码图片
+    with open("captcha.jpg", "wb") as f:
+        f.write(response.content)
+
+    from PIL import Image
+    try:
+        im = Image.open("captcha.jpg")
+        im.show()
+        im.close()
+    except:
+        pass
+
+    """
+        这边显示验证码的图片,需要用户进行对话框输入
+    """
+    captcha_value = input("imput captcha\n >")
+    return captcha_value
+
 
 # 进行知乎的登录注册(旧版的接口)
 def zhihu_old_login(account, password):
@@ -74,11 +106,19 @@ def zhihu_old_login(account, password):
         # 如果是手机号码登陆则，url
         post_url = "https://www.zhihu.com/login/phone_num"
 
-        # 需要向该post_url 传递的数据
+        """
+            在向登录url. post登录数据前, 要先请求登录验证码
+        """
+        captcha_value = get_captcha()
+        """
+            需要向该post_url 传递的数据,
+            其中包括传递验证码
+        """
         post_data = {
             "_xsrf":get_xsrf(),
             "phone_num":account,
-            "password":password
+            "password":password,
+            "captcha":captcha_value  # 验证码
         }
 
         # 模拟登录就是将数据内容post到某个url中
@@ -107,4 +147,4 @@ def zhihu_old_login(account, password):
 
 
 if __name__ == "__main__":
-     get_xsrf()
+    get_captcha()

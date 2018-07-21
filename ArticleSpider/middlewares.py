@@ -6,6 +6,7 @@
 # https://doc.scrapy.org/en/latest/topics/spider-middleware.html
 
 from scrapy import signals
+from fake_useragent import UserAgent
 
 
 class ArticlespiderSpiderMiddleware(object):
@@ -101,3 +102,44 @@ class ArticlespiderDownloaderMiddleware(object):
 
     def spider_opened(self, spider):
         spider.logger.info('Spider opened: %s' % spider.name)
+
+"""
+   随机更换 User-agent
+"""
+
+class RandomUserAgentMiddleware(object):
+
+    def __init__(self, crawler):
+        super(RandomUserAgentMiddleware, self).__init__()
+        """
+            定义第三方模块 UserAgent对象, 
+            通过调用 self.ua.random 方法取随机浏览器的User-agent
+            通过调用 self.ua.google 方法去google浏览器的随机User-agent
+        """
+        self.ua = UserAgent()
+        """
+           通过 crawler 对象可以从 setting.py文件中取一些定义的参数
+        """
+        self.ua_type = crawler.settings.get("RANDOM_UA_TYPE", "random")
+
+    """
+     将 crawler 对象传递到 RandomUserAgentMiddleware类中
+    """
+    @classmethod
+    def from_crawler(cls, crawler):
+        return cls(crawler)
+
+    def process_request(self, request, spider):
+        """
+            通过 getattr()方法 得到
+            self.ua.random,self.ua.google 这取决于 self.ua_type 的值
+        """
+        def get_ua():
+            return getattr(self.ua, self.ua_type)
+        request.headers.setdefault('User-Agent', get_ua())
+        """
+            设置 ip 代理, 隐藏本机的ip,不会被服务器封
+        """
+        request.meta["proxy"] = "http://125.118.247.4:6666"
+
+

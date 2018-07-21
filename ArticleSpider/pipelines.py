@@ -79,6 +79,10 @@ class MysqlPipeline(object):
 
 
 #通过twisted框架进行数据库插入(异步得插入到数据库中)
+"""
+    通过 MysqlTwistedPipeline() 来处理所有的各个类型的 item, 例如 伯乐在线的item,
+    知乎 question_item, 知乎 answer_item
+"""
 class MysqlTwistedPipeline(object):
 
     def __init__(self, dbpool):
@@ -108,22 +112,41 @@ class MysqlTwistedPipeline(object):
         # 调用twisted 中的runInteraction函数来执行异步操作
         query = self.dbpool.runInteraction(self.do_insert, item)
         # 进行错误的处理判断
-        query.addErrback(self.handle_error)
+        query.addErrback(self.handle_error, item)
 
-    def handle_error(self, failure):
+    """
+        这个函数非常重要,在正式投入使用时, 我们通过将错误信息插入到日志中，
+        有时候插入失败 以及 代码有 bug, 这时错误信息就非常关键,
+        通过打断点进行代码调试
+    """
+    def handle_error(self, failure, item, spider):
         # 处理异步插入的异常
         print(failure)
 
     def do_insert(self, cursor, item):
-        #执行具体得插入
-        insert_sql = """
-                    insert into jobbole_article(title, datetime, url, 
-                    url_object_id, front_image_url, front_image_path, like_num, collect_num, context)
-                    values(%s, %s, %s, %s, %s, %s, %s, %s, %s);
-                """
 
-        cursor.execute(insert_sql, (item["title"], item["datetime"], item["url"],
-                                         item["url_object_id"], item["front_image_url"],
-                                         item["front_image_path"], item["like_num"],
-                                         item["collect_num"], item["context"]))
+        """
+            根据不同的 item 构建不同的 sql 语句并插入到 MySQL 中
+        """
+
+        # if item.__class__.__name__ == "JobBoleArticleItem": # 这种硬编码的方式,在后续修改的时候比较麻烦
+        #     #执行具体得插入
+        #     insert_sql = """
+        #                 insert into jobbole_article(title, datetime, url,
+        #                 url_object_id, front_image_url, front_image_path, like_num, collect_num, context)
+        #                 values(%s, %s, %s, %s, %s, %s, %s, %s, %s);
+        #             """
+        #
+        #     cursor.execute(insert_sql, (item["title"], item["datetime"], item["url"],
+        #                                      item["url_object_id"], item["front_image_url"],
+        #                                      item["front_image_path"], item["like_num"],
+        #                                      item["collect_num"], item["context"]))
+
+        """
+            这样只需要在各自的 item 中写好 各种的 SQL 语句就行了,
+            这个方法体现了 面向对象编程
+        """
+        insert_sql, params = item.get_insert_sql()
+        cursor.execute(insert_sql,params)
+
         # 不需要commit twisted自动帮我们commit

@@ -53,9 +53,22 @@ ROBOTSTXT_OBEY = False
 
 # Enable or disable downloader middlewares
 # See https://doc.scrapy.org/en/latest/topics/downloader-middleware.html
-#DOWNLOADER_MIDDLEWARES = {
-#    'ArticleSpider.middlewares.ArticlespiderDownloaderMiddleware': 543,
-#}
+DOWNLOADER_MIDDLEWARES = {
+    'ArticleSpider.middlewares.RandomUserAgentMiddleware': 643,
+   'ArticleSpider.middlewares.ArticlespiderDownloaderMiddleware': 543,
+    'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
+}
+
+# user_agent_list = [
+#     "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.108 Safari/537.36",
+#     ""
+# ]
+
+RANDOM_UA_TYPE = "random"
+
+# USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; Win64; x64)" \
+#              " AppleWebKit/537.36 (KHTML, like Gecko) " \
+#              "Chrome/63.0.3239.108 Safari/537.36"
 
 # Enable or disable extensions
 # See https://doc.scrapy.org/en/latest/topics/extensions.html
@@ -75,6 +88,16 @@ ITEM_PIPELINES = {
 IMAGES_URLS_FIELD = "front_image_url"
 project_dir = os.path.dirname(os.path.abspath(__file__))
 IMAGES_STORE = os.path.join(project_dir, "images")
+
+import os
+import sys
+"""
+    sys.path.insert 函数主要是将某个路径插入到 pathonpath 中
+    第一个参数是序列号
+    第二个参数是要插入的路径名
+"""
+sys.path.insert(0, project_dir)
+
 
 #图片过滤规则
 # IMAGES_MIN_HEIGHT = 100  #图片最小高度
@@ -105,3 +128,7 @@ MYSQL_HOST = "127.0.0.1"
 MYSQL_DBNAME = "article_spider"
 MYSQL_USER = "root"
 MYSQL_PASSWORD = "123456"
+
+SQL_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+SQL_DATE_FORMAT = "%Y-%m-%d"
+
