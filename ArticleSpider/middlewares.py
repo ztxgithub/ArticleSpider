@@ -138,7 +138,7 @@ class RandomUserAgentMiddleware(object):
             return getattr(self.ua, self.ua_type)
         request.headers.setdefault('User-Agent', get_ua())
         """
-            设置 ip 代理, 隐藏本机的ip,不会被服务器封
+            设置 ip 代理, 隐藏本机的 ip,不会被服务器封
         """
         request.meta["proxy"] = "http://125.118.247.4:6666"
 
