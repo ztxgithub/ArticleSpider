@@ -7,7 +7,37 @@
 
 from scrapy import signals
 from fake_useragent import UserAgent
+from tools.crawl_cixi_ip import GetIP
+from selenium import webdriver
+from scrapy.http import HtmlResponse
 
+class JSPageMiddleware(object):
+
+    # 这样可以使得不打开很多浏览器
+    def __init__(self):
+        self.browser = webdriver.Chrome(
+            executable_path="C:/spiderDriver/chromedriver.exe")
+        super(JSPageMiddleware, self).__init__()
+
+    # 通过chrome请求动态网页
+    def process_request(self, request, spider):
+        if spider.name == "jobbole":
+            self.browser.get(request.url)
+            import time
+            time.sleep(3)
+            print ("访问:{0}".format(request.url))
+
+            """
+                通过 Selenium 已经向网站请求页面
+                了，就不需要再通过下载器进行二次下载了
+                scrapy 一旦遇到 HtmlResponse，就不会用下载器
+                下载页面，而是直接返回
+            """
+            return HtmlResponse(
+                url=self.browser.current_url,
+                body=self.browser.page_source,
+                encoding="utf-8",
+                request=request)
 
 class ArticlespiderSpiderMiddleware(object):
     # Not all methods need to be defined. If a method is not defined,
@@ -141,5 +171,11 @@ class RandomUserAgentMiddleware(object):
             设置 ip 代理, 隐藏本机的 ip,不会被服务器封
         """
         request.meta["proxy"] = "http://125.118.247.4:6666"
+
+class RandomProxyMiddleware(object):
+    # 动态设置 ip 代理
+    def process_request(self, request, spider):
+        get_ip = GetIP()
+        request.meta["proxy"] = get_ip.get_random_ip()
 
 

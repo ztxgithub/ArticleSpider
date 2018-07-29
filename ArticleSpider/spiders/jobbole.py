@@ -12,13 +12,54 @@ import hashlib
 
 from scrapy.loader import ItemLoader
 
+## 用于 scrapy 的信号
+from scrapy.xlib.pydispatch import dispatcher # 分发器
+from scrapy import signals
+
 
 class JobboleSpider(scrapy.Spider):
     name = 'jobbole'
     allowed_domains = ['blog.jobbole.com']
     start_urls = ['http://blog.jobbole.com/all-posts/']
 
+    # 收集伯乐在线所有404的url以及404页面数
+    """
+        handle_httpstatus_list 默认是不包含 404，
+        需要对 404 的页面进行处理，则需要将 404 加入到handle_httpstatus_list中
+    """
+    handle_httpstatus_list = [404]
+
+    """
+        我们要收集404的url以及404页面数
+        则必须要 self.fail_urls 进行保存
+    """
+    def __init__(self):
+        self.fail_urls = []
+        dispatcher.connect(self.handle_spider_cosed, signals.spider_closed)
+
+    def handle_spider_cosed(self, spider, reason):
+        self.crawler.stats.set_value("failed_urls", ",".join(self.fail_urls))
+        pass
+
+    # 使用selenium:
+    # def __init__(self):
+    #     self.browser = webdriver.Chrome(executable_path="C:/spiderDriver/chromedriver.exe")
+    #     super(JobboleSpider, self).__init__()
+    #     # 当匹配到spider_closedz这个信号时。关闭浏览器
+    #     dispatcher.connect(self.spider_closed, signals.spider_closed)
+    #
+    # def spider_closed(self, spider):
+    #     # 当爬虫退出的时候关闭chrome
+    #     print("spider closed")
+    #     self.browser.quit()
+
     def parse(self, response):
+
+        # 如果状态值为404
+        if response.status == 404:
+            self.fail_urls.append(response.url)
+            self.crawler.stats.inc_value("failed_url")
+
         """
         1. 获取文章列表页的文章url并交给scrapy下载，通过解析函数进行具体字段的解析
         2. 获取下一页的url并交给scrapy进行下载，下载完成后交给parse
